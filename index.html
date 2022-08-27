@@ -1,0 +1,436 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+
+    <title></title>
+    <link rel="stylesheet" href="dist/reveal.css" />
+    <link rel="stylesheet" href="dist/theme/league.css" id="theme" />
+    <link rel="stylesheet" href="plugin/highlight/zenburn.css" />
+	<link rel="stylesheet" href="css/layout.css" />
+	<link rel="stylesheet" href="plugin/customcontrols/style.css">
+	<link rel="stylesheet" href="plugin/chalkboard/style.css">
+
+
+    <script defer src="dist/fontawesome/all.min.js"></script>
+
+	<script type="text/javascript">
+		var forgetPop = true;
+		function onPopState(event) {
+			if(forgetPop){
+				forgetPop = false;
+			} else {
+				parent.postMessage(event.target.location.href, "app://obsidian.md");
+			}
+        }
+		window.onpopstate = onPopState;
+		window.onmessage = event => {
+			if(event.data == "reload"){
+				window.document.location.reload();
+			}
+			forgetPop = true;
+		}
+
+		function fitElements(){
+			const itemsToFit = document.getElementsByClassName('fitText');
+			for (const item in itemsToFit) {
+				if (Object.hasOwnProperty.call(itemsToFit, item)) {
+					var element = itemsToFit[item];
+					fitElement(element,1, 1000);
+					element.classList.remove('fitText');
+				}
+			}
+		}
+
+		function fitElement(element, start, end){
+
+			let size = (end + start) / 2;
+			element.style.fontSize = `${size}px`;
+
+			if(Math.abs(start - end) < 1){
+				while(element.scrollHeight > element.offsetHeight){
+					size--;
+					element.style.fontSize = `${size}px`;
+				}
+				return;
+			}
+
+			if(element.scrollHeight > element.offsetHeight){
+				fitElement(element, start, size);
+			} else {
+				fitElement(element, size, end);
+			}		
+		}
+
+
+		document.onreadystatechange = () => {
+			fitElements();
+			if (document.readyState === 'complete') {
+				if (window.location.href.indexOf("?export") != -1){
+					parent.postMessage(event.target.location.href, "app://obsidian.md");
+				}
+				if (window.location.href.indexOf("print-pdf") != -1){
+					let stateCheck = setInterval(() => {
+						clearInterval(stateCheck);
+						window.print();
+					}, 250);
+				}
+			}
+	};
+
+
+        </script>
+  </head>
+  <body>
+    <div class="reveal">
+      <div class="slides"><section  data-markdown><script type="text/template">
+
+<!-- .slide: data-auto-animate="true" -->
+
+## 60 分钟构建你的博客
+
+### 统计之都云讲堂第 8 讲
+
+#### By 孔令仁
+</script></section><section  data-markdown><script type="text/template">
+<!-- .slide: data-auto-animate="true" -->
+
+## 内容简介
+
+1. 现有博客搭建方式
+2. Quarto 简介
+3. 工具选取分析
+4. 实操
+	1. 本地设置
+	2. 部署
+	3. 细节调整
+
+</script></section><section  data-markdown><script type="text/template">
+<!-- .slide: data-auto-animate="true" -->
+
+### 现有博客方式
+
+
+- 需要服务器的个人博客系统：如 WordPress
+	- 缺点：服务器必需
+	- 优点：成品镜像，更多交互可能性（动态网站）
+- 静态网页生成：如 Hugo、Jekyll、Hexo
+	- 缺点：交互功能少，需要生成器
+	- 优点：可以免费实现
+- 依赖更多的静态网页生成：Blogdown、Quarto
+	- 缺点：不写代码有点浪费
+	- 优点：解决代码的操作需求
+
+</script></section><section  data-markdown><script type="text/template">
+<!-- .slide: data-auto-animate="true" -->
+
+## Quarto 简介
+
+>Quarto® is an open-source scientific and technical publishing system built on Pandoc
+
+- 四种语言支持: [Python](https://quarto.org/docs/computations/python.html), [R](https://quarto.org/docs/computations/r.html), [Julia](https://quarto.org/docs/computations/julia.html), and [Observable](https://quarto.org/docs/computations/ojs.html).
+- 多种编辑方式（VS Code, RStudio, Jupyter, Text）
+- 多种输出：约等于所有 Pandoc 支持类型都行
+
+</script></section><section  data-markdown><script type="text/template"><!-- .slide: data-auto-animate="true" -->
+
+## Quarto VS Blogdown
+
+统计之都论坛里面大佬的讨论帖：
+- [Frank Harrell 用 quarto 写博客](https://d.cosx.org/d/423166-frank-harrell-quarto)
+- [Quarto 尝鲜](https://d.cosx.org/d/423085-quarto/8)
+- [Quarto和R Markdown的区别？](https://d.cosx.org/d/422901-quartor-markdown/10)
+
+</script></section><section  data-markdown><script type="text/template"><!-- .slide: data-auto-animate="true" -->
+
+## Quarto VS Blogdown
+
+Blogdown 很棒，但是 Hugo 和 Rmd 不一样
+- 对于数学的支持很不友好
+- 功能存在主题依赖性
+- 配置主题如果迁移很累
+
+</script></section><section  data-markdown><script type="text/template"><!-- .slide: data-auto-animate="true" -->
+
+## Quarto VS Blogdown
+都有共性缺点：涉及数据转换必有 bug
+- blogdown 三格式：Rmd、Rmarkdown、md
+- quarto 双路径：jupyter、knitr
+
+</script></section><section  data-markdown><script type="text/template"><!-- .slide: data-auto-animate="true" -->
+
+### 实操 - 本地设置
+
+基于 Quarto 的博客使用过程主要包含以下工具：
+
+- Python 与 R：这方面本地是已经装好的，不用大调整（但是可能还有需要调的内容，比如 conda 的调用问题
+- GitHub Desktop：用于 Git 管理和后续发布，不是必需品，可以从 [官方网站](https://desktop.github.com/) 下载安装
+- Quarto：博客构建的核心工具，不依赖 R 或者 Python。从 [官网](https://quarto.org/docs/get-started/) 下载即可
+- VS Code : 用于编辑文本内容、跑代码。使用 RStudio, Jupyter 或者一般的文本编辑器也可以。
+
+</script></section><section  data-markdown><script type="text/template"><!-- .slide: data-auto-animate="true" -->
+
+### 实操 - 部署设置
+
+[发布方式一览](https://quarto.org/docs/publishing/)：
+
+- [Quarto Pub](https://quarto.org/docs/publishing/quarto-pub.html)：免费，Quarto 自己运行的，需要注册一个账号即可。
+- [GitHub Pages](https://quarto.org/docs/publishing/github-pages.html)：免费，内容作为代码放到 GitHub 运行，page 的高级需要付费
+- [RStudio Connect](https://quarto.org/docs/publishing/rstudio-connect.html)：团体内部发行，不公开
+- [Netlify](https://quarto.org/docs/publishing/netlify.html)：专业发布平台（可以 GitHub 注册！），基本功能免费
+- [Other Services](https://quarto.org/docs/publishing/other.html)：导出文件然后自行发布
+
+</script></section><section  data-markdown><script type="text/template"><!-- .slide: data-auto-animate="true" -->
+
+### 实操 - 部署设置
+
+使用 Netlify 的也有不同的几个方式：
+
+1. 本地渲染 + 推流到平台
+2. 传到 GitHub 等托管平台，然后授权 Netlify 读取
+3. GitHub Action 服务
+4. 自定义添加 Continuous Integration (CI) 服务
+
+</script></section><section  data-markdown><script type="text/template"><!-- .slide: data-auto-animate="true" -->
+
+### 实操 - 部署设置
+
+GitHub 建立：开个私有库（公开也可以），然后拉取到本地（可以用 Desktop），此时啥文件都没有
+
+创建 `.gitignore`，并且（**在初始化之前**）加入：
+
+```
+/.quarto/
+/_site/
+```
+
+初始化，然后第一次上传~
+</script></section><section  data-markdown><script type="text/template"><!-- .slide: data-auto-animate="true" -->
+
+### 实操 - 部署设置
+
+Netlify 认证
+
+登录 ->User settings->applications->Personal access tokens
+
+GitHub->目标库 ->Settings->secrets->Actions secrets
+
+- 命名为“NETLIFY_AUTH_TOKEN”
+- 放入生成的 key
+
+</script></section><section  data-markdown><script type="text/template"><!-- .slide: data-auto-animate="true" -->
+
+### 实操 - 部署设置
+
+转回本地
+
+命令行发布 `quarto publish netlify`：
+
+- 网页登录自己的 Netlify
+- 浏览器允许认证
+- 然后可能会失败 -- 后续可以自己手搓改数据
+
+</script></section><section  data-markdown><script type="text/template"><!-- .slide: data-auto-animate="true" -->
+
+### 实操 - 部署设置
+
+
+手搓模式：
+
+- 创建文件 `_publish.yml`
+- 录入 netlify 官网的 id 和 url（这个可以自己改名）
+
+第二次用命令就是从本地直接上传到 netlify 了
+
+当然现在也可以用 [action](https://quarto.org/docs/publishing/netlify.html#publish-action) 来实现提交
+
+涉及代码运行，建议研究一下 [`_freeze`](https://quarto.org/docs/projects/code-execution.html#freeze) 文件夹的设定
+
+</script></section><section  data-markdown><script type="text/template"><!-- .slide: data-auto-animate="true" -->
+
+### 实操 - 内容调整
+
+- 基本信息
+- 美化与格式
+- 文件结构
+
+Quarto 的博客功能，实质上是写好的一套预制 HTML
+</script></section><section  data-markdown><script type="text/template"><!-- .slide: data-auto-animate="true" -->
+
+### 基本信息
+
+[导航栏](https://quarto.org/docs/websites/website-navigation.html)：
+- 支持自定义顶栏
+- 支持自定义侧栏
+- 有选项框功能
+</script></section><section  data-markdown><script type="text/template"><!-- .slide: data-auto-animate="true" -->
+
+### 基本信息
+
+[About](https://quarto.org/docs/websites/website-about.html) 页面:
+
+- 带有 `about` 参数的页面将被识别，调用设计好的模板
+- 有多种模板
+- 还可以进行局部显示（略）
+</script></section><section  data-markdown><script type="text/template"><!-- .slide: data-auto-animate="true" -->
+
+### 基本信息
+
+[列表页](https://quarto.org/docs/websites/website-listings.html)：
+- 带有 `listing` 参数的页面被识别为列表页
+- 可以显示文件夹，或者设置匹配符
+- 有多种模板
+- 可以按照 `categories` 增加侧边栏
+
+</script></section><section  data-markdown><script type="text/template"><!-- .slide: data-auto-animate="true" -->
+
+### 美化与格式
+
+在 `_quarto.yml` 可以配置主题和更多自定义 CSS
+
+```yaml
+format:
+  html:
+    theme: minty #cosmo
+    css: styles.css
+```
+
+CSS 的扩展性不是万能的，但是足以达成个人美化需求。
+
+</script></section><section  data-markdown><script type="text/template"><!-- .slide: data-auto-animate="true" -->
+
+### 美化与格式
+
+如果有跟多需求可以考虑利用 [`Short Code`](https://quarto.org/docs/extensions/shortcodes.html)，例如官方就提供了视频插件（好像不支持 B 站！）。
+
+只需 `quarto install extension quarto-ext/video`，即可安装（要放到项目目录里面）。
+
+然后就可以用这种代码段实现插入视频效果：
+
+```
+{{< video https://www.youtube.com/embed/wo9vZccmqwc >}}
+```
+</script></section><section  data-markdown><script type="text/template"><!-- .slide: data-auto-animate="true" -->
+
+### 文件结构
+
+按照博客进行构建的情况下，两种情况都可以：
+- `post/blog-name.qmd`
+- `post/blog-name/index.qmd`
+
+前者简单直接，后者适合大项目
+
+（尤其是有代码、图片等情况下）
+</script></section><section  data-markdown><script type="text/template">
+# 谢谢大家</script></section></div>
+    </div>
+
+    <script src="dist/reveal.js"></script>
+
+    <script src="plugin/markdown/markdown.js"></script>
+    <script src="plugin/highlight/highlight.js"></script>
+    <script src="plugin/zoom/zoom.js"></script>
+    <script src="plugin/notes/notes.js"></script>
+    <script src="plugin/math/math.js"></script>
+	<script src="plugin/mermaid/mermaid.js"></script>
+	<script src="plugin/chart/chart.min.js"></script>
+	<script src="plugin/chart/plugin.js"></script>
+	<script src="plugin/menu/menu.js"></script>
+	<script src="plugin/customcontrols/plugin.js"></script>
+	<script src="plugin/chalkboard/plugin.js"></script>
+
+    <script>
+      function extend() {
+        var target = {};
+        for (var i = 0; i < arguments.length; i++) {
+          var source = arguments[i];
+          for (var key in source) {
+            if (source.hasOwnProperty(key)) {
+              target[key] = source[key];
+            }
+          }
+        }
+        return target;
+      }
+
+	  function isLight(color) {
+		let hex = color.replace('#', '');
+
+		// convert #fff => #ffffff
+		if(hex.length == 3){
+			hex = `${hex[0]}${hex[0]}${hex[1]}${hex[1]}${hex[2]}${hex[2]}`;
+		}
+
+		const c_r = parseInt(hex.substr(0, 2), 16);
+		const c_g = parseInt(hex.substr(2, 2), 16);
+		const c_b = parseInt(hex.substr(4, 2), 16);
+		const brightness = ((c_r * 299) + (c_g * 587) + (c_b * 114)) / 1000;
+		return brightness > 155;
+	}
+
+	var bgColor = getComputedStyle(document.documentElement).getPropertyValue('--r-background-color').trim();
+
+	if(isLight(bgColor)){
+		document.body.classList.add('has-light-background');
+	} else {
+		document.body.classList.add('has-dark-background');
+	}
+
+      // default options to init reveal.js
+      var defaultOptions = {
+        controls: true,
+        progress: true,
+        history: true,
+        center: true,
+        transition: 'default', // none/fade/slide/convex/concave/zoom
+        plugins: [
+          RevealMarkdown,
+          RevealHighlight,
+          RevealZoom,
+          RevealNotes,
+          RevealMath.MathJax3,
+		  RevealMermaid,
+		  RevealChart,
+		  RevealCustomControls,
+		  RevealMenu,
+		  RevealChalkboard, 
+        ],
+
+		mathjax3: {
+			mathjax: 'plugin/math/mathjax/tex-mml-chtml.js',
+		},
+
+		customcontrols: {
+			controls: [
+				{id: 'toggle-overview',
+				title: 'Toggle overview (O)',
+				icon: '<i class="fa fa-th"></i>',
+				action: 'Reveal.toggleOverview();'
+				},
+				{ icon: '<i class="fa fa-pen-square"></i>',
+				title: 'Toggle chalkboard (B)',
+				action: 'RevealChalkboard.toggleChalkboard();'
+				},
+				{ icon: '<i class="fa fa-pen"></i>',
+				title: 'Toggle notes canvas (C)',
+				action: 'RevealChalkboard.toggleNotesCanvas();'
+				},
+			]
+		},
+		menu: {
+			loadIcons: false
+		}
+      };
+
+      // options from URL query string
+      var queryOptions = Reveal().getQueryHash() || {};
+
+      var options = extend(defaultOptions, {"width":960,"height":700,"margin":0.04,"controls":true,"progress":true,"slideNumber":true,"transition":"convex","transitionSpeed":"default"}, queryOptions);
+    </script>
+
+    <script>
+      Reveal.initialize(options);
+    </script>
+  </body>
+</html>
